@@ -7,33 +7,37 @@ object Main {
 
 	def main(args: Array[String]): Unit = {
 		val iterations = 1000
+		val size = 7
+		val randomArray = (1 to size).map(_ => util.Random.nextInt(50))
 
-		val sequentialTime = computeAvgTime(sequentialBogosort, iterations)
-		val parallelTime = computeAvgTime(auxParallelBogosort, iterations)
+		val (sequentialTime, sorted1) = computeAvgTime(sequentialBogosort, iterations)(randomArray)
+		val (parallelTime, sorted2) = computeAvgTime(parallelBogosort, iterations)(randomArray)
 
-		println(s"Sequential implementation : $sequentialTime ms")
-		println(s"\nParallel implementation : $parallelTime ms")
+		println("Average Computing time :")
+		println(s"Sequential implementation : $sequentialTime ms | $randomArray -> $sorted1")
+		println(s"\nParallel implementation : $parallelTime ms | $randomArray -> $sorted2")
 		println(s"\nOverrall speedup : " + sequentialTime / parallelTime)
 	}
 
-	def auxParallelBogosort(in: Seq[Int]): Seq[Int] = {
+	def parallelBogosort(in: Seq[Int]): Seq[Int] = {
+
+		def auxParallelBogosort(in: Seq[Int]): Seq[Int] = {
+			var input = in
+			var i = 1
+			while (!finished && !isSorted(input)) {
+				input = shuffle(input)
+				i += 1
+			}
+			finished = true
+			input
+		}
+
 		finished = false
-		val output = parallel(parallelBogosort(in), parallelBogosort(in), parallelBogosort(in), parallelBogosort(in))
+		val output = parallel(auxParallelBogosort(in), auxParallelBogosort(in), auxParallelBogosort(in), auxParallelBogosort(in))
 		if (isSorted(output._1)) output._1
 		else if (isSorted(output._2)) output._2
 		else if (isSorted(output._3)) output._3
 		else output._4
-	}
-
-	def parallelBogosort(in: Seq[Int]): Seq[Int] = {
-		var input = in
-		var i = 1
-		while (!finished && !isSorted(input)) {
-			input = shuffle(input)
-			i += 1
-		}
-		finished = true
-		input
 	}
 
 	def sequentialBogosort(in: Seq[Int]): Seq[Int] = {
@@ -50,16 +54,17 @@ object Main {
 
 	def shuffle(array: Seq[Int]): Seq[Int] = util.Random.shuffle(array)
 
-	def computeAvgTime(sort: Seq[Int] => Seq[Int], iterations: Int): Double = {
-		val input = Array(1, 4, 8, 5, 6, 2)
+	def computeAvgTime(sort: Seq[Int] => Seq[Int], iterations: Int)(array:Seq[Int]): (Double, Seq[Int]) = {
+		var sorted = Seq[Int]()
 		var totalTime: Double = 0
+
 		(1 to iterations).foreach(_ => {
 			val in_time = System.nanoTime()
-			sort(input)
+			sorted = sort(array)
 			val out_time = System.nanoTime()
 			totalTime += out_time - in_time
 		})
 		val avg = totalTime / (iterations * TO_MILLISECONDS)
-		avg
+		(avg, sorted)
 	}
 }
