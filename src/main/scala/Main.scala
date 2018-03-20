@@ -3,7 +3,6 @@ import common._
 object Main {
 
 	val TO_MILLISECONDS = 1000000f
-	var finished = false
 
 	def main(args: Array[String]): Unit = {
 		val iterations = 1000
@@ -20,6 +19,7 @@ object Main {
 	}
 
 	def parallelBogosort(in: Seq[Int]): Seq[Int] = {
+		var finished = false
 
 		def auxParallelBogosort(in: Seq[Int]): Seq[Int] = {
 			var input = in
